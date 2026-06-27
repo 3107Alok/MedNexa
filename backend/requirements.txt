@@ -4,7 +4,7 @@ pymongo
 dnspython
 firebase-admin
 pytesseract
-pillow
+Pillow>=10.4.0
 requests
 python-dotenv
 google-generativeai
