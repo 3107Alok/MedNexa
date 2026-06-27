@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/services/auth_provider.dart';
-import 'package:frontend/models/user_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -17,14 +15,6 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
-  
-  // Doctor fields
-  final _licenseController = TextEditingController();
-  final _specController = TextEditingController();
-  final _hospitalController = TextEditingController();
-  final _expController = TextEditingController();
-
-  UserRole _selectedRole = UserRole.patient;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +29,23 @@ class _SignupScreenState extends State<SignupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                'Join MediNexa',
+                style: GoogleFonts.outfit(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Enter your details to register. You will select your role next.',
+                style: GoogleFonts.outfit(
+                  fontSize: 15,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 32),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Full Name', prefixIcon: Icon(Icons.person_outline)),
@@ -47,7 +54,7 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 20),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
+                decoration: const InputDecoration(labelText: 'Email Address', prefixIcon: Icon(Icons.email_outlined)),
                 validator: (value) => value!.isEmpty ? 'Enter email' : null,
               ),
               const SizedBox(height: 20),
@@ -57,87 +64,40 @@ class _SignupScreenState extends State<SignupScreen> {
                 decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock_outline)),
                 validator: (value) => value!.length < 6 ? 'Min 6 characters' : null,
               ),
-              const SizedBox(height: 24),
-              Text('Select Role', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Column(
-                children: [
-                  RadioListTile<UserRole>(
-                    title: const Text('Patient'),
-                    value: UserRole.patient,
-                    groupValue: _selectedRole,
-                    onChanged: (v) => setState(() => _selectedRole = v!),
-                  ),
-                  RadioListTile<UserRole>(
-                    title: const Text('Doctor'),
-                    value: UserRole.doctor,
-                    groupValue: _selectedRole,
-                    onChanged: (v) => setState(() => _selectedRole = v!),
-                  ),
-                ],
-              ),
-              if (_selectedRole == UserRole.doctor) ...[
-                const SizedBox(height: 20),
-                Text('Professional Details', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _licenseController,
-                  decoration: const InputDecoration(labelText: 'Medical License Number'),
-                  validator: (v) => _selectedRole == UserRole.doctor && v!.isEmpty ? 'Required' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _specController,
-                  decoration: const InputDecoration(labelText: 'Specialization'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _hospitalController,
-                  decoration: const InputDecoration(labelText: 'Hospital Affiliation'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _expController,
-                  decoration: const InputDecoration(labelText: 'Years of Experience'),
-                  keyboardType: TextInputType.number,
-                ),
-              ],
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: authProvider.isLoading
-                    ? null
-                    : () async {
-                        if (_formKey.currentState!.validate()) {
-                          Map<String, dynamic>? extraData;
-                          if (_selectedRole == UserRole.doctor) {
-                            extraData = {
-                              'license': _licenseController.text,
-                              'specialization': _specController.text,
-                              'hospital': _hospitalController.text,
-                              'experience': _expController.text,
-                            };
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: authProvider.isLoading
+                      ? null
+                      : () async {
+                          if (_formKey.currentState!.validate()) {
+                            final success = await authProvider.signUp(
+                              email: _emailController.text.trim(),
+                              password: _passwordController.text,
+                              name: _nameController.text.trim(),
+                            );
+                            
+                            if (success && mounted) {
+                              Navigator.pop(context);
+                            } else if (!success && mounted) {
+                               ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Registration Failed')),
+                                );
+                            }
                           }
-                          
-                          final success = await authProvider.signUp(
-                            email: _emailController.text,
-                            password: _passwordController.text,
-                            name: _nameController.text,
-                            role: _selectedRole,
-                            extraData: extraData,
-                          );
-                          
-                          if (success && mounted) {
-                            Navigator.pop(context);
-                          } else if (!success && mounted) {
-                             ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Registration Failed')),
-                              );
-                          }
-                        }
-                      },
-                child: authProvider.isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Create Account'),
+                        },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: authProvider.isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                          'Create Account',
+                          style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                ),
               ),
             ],
           ),

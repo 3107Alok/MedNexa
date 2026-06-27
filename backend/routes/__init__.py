@@ -20,6 +20,8 @@ def token_required(f):
     def decorated(*args, **kwargs):
         token = request.headers.get('Authorization')
         if not token:
+            token = request.args.get('token')
+        if not token:
             return jsonify({"error": "Token is missing"}), 401
         
         # Remove "Bearer " prefix if present
@@ -30,8 +32,17 @@ def token_required(f):
         if not decoded_token:
             return jsonify({"error": "Invalid or expired token"}), 401
             
+        # Ensure 'uid' is populated consistently (from user_id or sub)
+        if 'uid' not in decoded_token:
+            decoded_token['uid'] = decoded_token.get('user_id') or decoded_token.get('sub')
+            
         # Add decoded user info to request
         request.user = decoded_token
+        
+        # Log the authenticated user details for auditing/debugging
+        print("AUTHENTICATED USER:", request.user)
+        print("USER TYPE:", type(request.user))
+        
         return f(*args, **kwargs)
     return decorated
 
@@ -119,7 +130,7 @@ def verify_doctor():
 def get_all_doctors():
     try:
         # Get all verified doctors
-        doctors = list(db.users.find({"role": "doctor", "status": "Verified"}, {"_id": 0}))
+        doctors = list(db.users.find({"role": "doctor", "status": "verified"}, {"_id": 0}))
         return jsonify(doctors), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -280,5 +291,3 @@ def chat():
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
         return jsonify({"error": f"Gemini API failure: {str(e)}"}), 500
-
-

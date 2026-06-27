@@ -14,8 +14,6 @@ class AuthService {
     required String email,
     required String password,
     required String name,
-    required UserRole role,
-    Map<String, dynamic>? extraData,
   }) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
@@ -25,14 +23,15 @@ class AuthService {
       User? user = result.user;
 
       if (user != null) {
+        await user.updateDisplayName(name);
         final uid = user.uid;
         final userData = {
           'uid': uid,
           'email': email,
           'name': name,
-          'role': role.toString().split('.').last,
-          'status': role == UserRole.doctor ? 'pending' : 'active',
-          ...?extraData,
+          'role': null,
+          'profileCompleted': false,
+          'createdAt': FieldValue.serverTimestamp(),
         };
 
         await _db.collection("users").doc(uid).set(userData);
@@ -41,7 +40,6 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      // SignUp error handled by provider
       return null;
     }
   }
@@ -56,13 +54,14 @@ class AuthService {
 
       if (user != null) {
         final doc = await _db.collection('users').doc(user.uid).get();
-        if (doc.exists) {
-          return UserModel.fromJson(doc.data()!);
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data()!;
+          data['uid'] = user.uid;
+          return UserModel.fromJson(data);
         }
       }
       return null;
     } catch (e) {
-      // SignIn error handled by provider
       return null;
     }
   }
@@ -83,25 +82,31 @@ class AuthService {
 
       if (user != null) {
         final doc = await _db.collection('users').doc(user.uid).get();
-        if (doc.exists) {
-          return UserModel.fromJson(doc.data()!);
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data()!;
+          data['uid'] = user.uid;
+          return UserModel.fromJson(data);
         } else {
-          // New Google User - default to patient
           final userData = {
             'uid': user.uid,
-            'email': user.email,
+            'email': user.email ?? '',
             'name': user.displayName ?? 'New User',
-            'role': 'patient',
-            'status': 'active',
+            'role': null,
+            'profileCompleted': false,
+            'createdAt': FieldValue.serverTimestamp(),
           };
           await _db.collection('users').doc(user.uid).set(userData);
           return UserModel.fromJson(userData);
         }
       }
       return null;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'account-exists-with-different-credential') {
+        throw Exception("An account already exists with this email. Please sign in using your password.");
+      }
+      rethrow;
     } catch (e) {
-        // Google Sign-In error handled by provider
-      return null;
+      rethrow;
     }
   }
 

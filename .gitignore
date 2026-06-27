@@ -13,9 +13,17 @@ venv/
 .env
 backend/.env
 
+# Firebase Admin SDK Credentials (SECRET - NEVER COMMIT)
+backend/*.json
+backend/**/*.json
+*firebase-adminsdk*.json
+
 # Local Uploads
 backend/uploads/*
 !backend/uploads/.gitkeep
+
+# Debug / Temp Scripts
+backend/print_appts.py
 
 # IDE Settings
 .vscode/
@@ -36,3 +44,7 @@ frontend/android/local.properties
 frontend/android/key.properties
 frontend/android/app/local.properties
 frontend/android/app/GeneratedPluginRegistrant.java
+
+# Temp analysis output
+frontend/analyze_output.txt
+frontend/flutter_02.png

@@ -92,11 +92,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: authProvider.isLoading
                         ? null
                         : () async {
-                            final success = await authProvider.signInWithGoogle();
-                            if (!success && mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Google Login Failed')),
-                              );
+                            try {
+                              final success = await authProvider.signInWithGoogle();
+                              if (!success && mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Google Login Failed')),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString().replaceAll('Exception:', '').trim())),
+                                );
+                              }
                             }
                           },
                     icon: const Icon(Icons.g_mobiledata, size: 30),

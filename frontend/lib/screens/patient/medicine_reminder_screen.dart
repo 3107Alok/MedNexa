@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/services/notification_service.dart';
 import 'package:frontend/services/reminder_service.dart';
-import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 
 import 'package:provider/provider.dart';
 import 'package:frontend/services/auth_provider.dart';
