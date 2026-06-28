@@ -80,6 +80,13 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
       body: SafeArea(
         child: tabs[_currentIndex],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.pushNamed(context, '/chatbot'),
+        backgroundColor: _isDarkMode ? const Color(0xFFBB86FC) : Colors.purple,
+        foregroundColor: Colors.white,
+        tooltip: 'AI Chatbot',
+        child: const Icon(Icons.smart_toy_outlined),
+      ),
       bottomNavigationBar: _buildGlassmorphicBottomNav(context),
     );
   }
