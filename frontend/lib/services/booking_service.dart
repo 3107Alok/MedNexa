@@ -38,6 +38,18 @@ class BookingService {
 
   Future<void> bookAppointment(Map<String, dynamic> bookingData) async {
     await _db.collection('appointments').add(bookingData);
+
+    final String doctorId = bookingData['doctor_id'] ?? '';
+    final String patientName = bookingData['patient_name'] ?? 'A patient';
+    if (doctorId.isNotEmpty) {
+      await _db.collection('notifications').add({
+        'userId': doctorId,
+        'title': 'New Appointment Booking 📅',
+        'body': '$patientName has booked an appointment with you for ${bookingData['date']} at ${bookingData['time_slot']}.',
+        'createdAt': FieldValue.serverTimestamp(),
+        'isRead': false,
+      });
+    }
   }
 
   Future<void> bookLabTest(Map<String, dynamic> labBookingData) async {
@@ -103,6 +115,28 @@ class BookingService {
     await _db.collection('appointments').doc(appointmentId).update({
       'status': status.toLowerCase(),
     });
+
+    if (status.toLowerCase() == 'approved') {
+      try {
+        final doc = await _db.collection('appointments').doc(appointmentId).get();
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data()!;
+          final patientId = data['patient_id'] ?? '';
+          final doctorName = data['doctor_name'] ?? 'Doctor';
+          if (patientId.isNotEmpty) {
+            await _db.collection('notifications').add({
+              'userId': patientId,
+              'title': 'Appointment Accepted 📅',
+              'body': 'Your appointment with $doctorName is accepted.',
+              'createdAt': FieldValue.serverTimestamp(),
+              'isRead': false,
+            });
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
   }
 
   Future<Map<String, dynamic>?> getPatientById(String patientId) async {

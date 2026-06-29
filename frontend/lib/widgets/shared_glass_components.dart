@@ -268,9 +268,7 @@ Future<void> showGlassSettingsModal(BuildContext context, bool isDarkMode, Funct
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Notifications coming soon!')),
-                  );
+                  Navigator.pushNamed(context, '/notifications');
                 },
               ),
               Divider(color: currentIsDark ? Colors.white10 : Colors.black12, height: 16),

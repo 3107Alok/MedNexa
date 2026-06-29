@@ -55,6 +55,16 @@ class AdminService {
       'verified': status.toLowerCase() == 'verified',
       'rejectionReason': FieldValue.delete(),
     });
+
+    if (status.toLowerCase() == 'verified') {
+      await _db.collection('notifications').add({
+        'userId': uid,
+        'title': 'Account Approved 🎉',
+        'body': 'Your doctor profile has been successfully verified by the Admin. You can now consult patients.',
+        'createdAt': FieldValue.serverTimestamp(),
+        'isRead': false,
+      });
+    }
   }
 
   Future<void> rejectDoctor(String uid, String reason) async {
@@ -62,6 +72,14 @@ class AdminService {
       'status': 'rejected',
       'verified': false,
       'rejectionReason': reason,
+    });
+
+    await _db.collection('notifications').add({
+      'userId': uid,
+      'title': 'Account Rejection ❌',
+      'body': 'Your doctor profile verification was rejected. Reason: $reason',
+      'createdAt': FieldValue.serverTimestamp(),
+      'isRead': false,
     });
   }
 

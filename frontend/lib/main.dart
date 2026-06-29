@@ -19,11 +19,7 @@ import 'package:frontend/screens/patient/lab_reports_screen.dart';
 import 'package:frontend/services/notification_service.dart';
 import 'package:frontend/models/user_model.dart';
 import 'package:frontend/screens/admin/admin_dashboard.dart';
-
-
-import 'package:frontend/screens/lab/lab_dashboard.dart';
-
-import 'package:frontend/screens/patient/lab_booking_screen.dart';
+import 'package:frontend/screens/notifications_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,6 +65,7 @@ class MedVerseApp extends StatelessWidget {
         '/ocr-reader': (context) => const PrescriptionReaderScreen(),
         '/medical-history': (context) => const MedicalHistoryScreen(),
         '/lab-reports': (context) => const LabReportsScreen(),
+        '/notifications': (context) => const NotificationsScreen(),
       },
     );
   }

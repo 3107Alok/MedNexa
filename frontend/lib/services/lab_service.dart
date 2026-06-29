@@ -61,6 +61,18 @@ class LabService {
     bookingData['status'] = 'pending';
     bookingData['createdAt'] = FieldValue.serverTimestamp();
     await _db.collection('lab_bookings').doc(bookingId).set(bookingData);
+
+    final String labId = bookingData['labId'] ?? '';
+    final String patientName = bookingData['patientName'] ?? 'A patient';
+    if (labId.isNotEmpty) {
+      await _db.collection('notifications').add({
+        'userId': labId,
+        'title': 'New Lab Booking 🩸',
+        'body': '$patientName has booked a ${bookingData['testName']} test for ${bookingData['date']} at ${bookingData['time_slot']}.',
+        'createdAt': FieldValue.serverTimestamp(),
+        'isRead': false,
+      });
+    }
   }
 
   // Stream of bookings for a specific Lab
