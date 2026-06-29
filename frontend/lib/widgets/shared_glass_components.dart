@@ -19,12 +19,11 @@ class GlassBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final systemBottom = MediaQuery.of(context).viewPadding.bottom;
     return Container(
       margin: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        bottom: systemBottom > 0 ? systemBottom + 8 : 20,
+        left: 16,
+        right: 16,
+        bottom: MediaQuery.of(context).viewPadding.bottom + 12,
       ),
       child: GlassContainer(
           isDarkMode: isDarkMode,
