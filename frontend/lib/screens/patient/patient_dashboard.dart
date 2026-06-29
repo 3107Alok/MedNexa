@@ -464,12 +464,12 @@ class _PatientHomeTabState extends State<PatientHomeTab> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: theme.primaryColor.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       'NEXT APPOINTMENT',
-                      style: GoogleFonts.outfit(fontSize: 10, color: theme.primaryColor, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                      style: GoogleFonts.outfit(fontSize: 10, color: theme.colorScheme.primary, fontWeight: FontWeight.bold, letterSpacing: 1.2),
                     ),
                   ),
                   const SizedBox(height: 10),
