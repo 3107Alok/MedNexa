@@ -624,13 +624,19 @@ class _PrescriptionReaderScreenState extends State<PrescriptionReaderScreen> {
           ),
         // Overall Summary
         if (result.summary.isNotEmpty) ...[
-          Text(
-            '💡 Overall Summary',
-            style: GoogleFonts.outfit(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-            ),
+          Row(
+            children: [
+              Icon(Icons.description_outlined, color: theme.colorScheme.primary, size: 24),
+              const SizedBox(width: 8),
+              Text(
+                'Overall Summary',
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Card(
@@ -649,13 +655,19 @@ class _PrescriptionReaderScreenState extends State<PrescriptionReaderScreen> {
 
         // Lifestyle Recommendations
         if (result.recommendation.isNotEmpty) ...[
-          Text(
-            '🍎 Lifestyle Recommendations',
-            style: GoogleFonts.outfit(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-            ),
+          Row(
+            children: [
+              Icon(Icons.spa_outlined, color: theme.colorScheme.primary, size: 24),
+              const SizedBox(width: 8),
+              Text(
+                'Lifestyle Recommendations',
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Card(
@@ -674,13 +686,19 @@ class _PrescriptionReaderScreenState extends State<PrescriptionReaderScreen> {
 
         // Doctor Advice
         if (result.warnings.isNotEmpty) ...[
-          Text(
-            '👨‍⚕️ Doctor Advice',
-            style: GoogleFonts.outfit(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-            ),
+          Row(
+            children: [
+              Icon(Icons.info_outline, color: theme.colorScheme.primary, size: 24),
+              const SizedBox(width: 8),
+              Text(
+                'Doctor Advice',
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Card(
