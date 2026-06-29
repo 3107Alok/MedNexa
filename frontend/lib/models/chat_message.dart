@@ -21,8 +21,26 @@ class ChatMessage {
       message: json['text'] ?? '',
       isUser: json['isUser'] ?? false,
       timestamp: json['timestamp'] != null 
-          ? DateTime.parse(json['timestamp']) 
+          ? (json['timestamp'] is String ? DateTime.parse(json['timestamp']) : DateTime.now()) 
           : DateTime.now(),
     );
+  }
+
+  factory ChatMessage.fromFirestore(Map<String, dynamic> data) {
+    return ChatMessage(
+      message: data['message'] ?? '',
+      isUser: data['isUser'] ?? false,
+      timestamp: data['timestamp'] != null 
+          ? (data['timestamp'] as dynamic).toDate() 
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'message': message,
+      'isUser': isUser,
+      'timestamp': timestamp,
+    };
   }
 }

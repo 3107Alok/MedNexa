@@ -76,6 +76,9 @@ class UserModel {
   final double? consultationFee;
   final bool? onlineStatus;
   final DoctorAvailability? availability;
+  final String? clinicName;
+  final String? clinicAddress;
+  final String? googleMapsUrl;
 
   // Patient properties
   final String? age;
@@ -105,6 +108,9 @@ class UserModel {
     this.consultationFee,
     this.onlineStatus,
     this.availability,
+    this.clinicName,
+    this.clinicAddress,
+    this.googleMapsUrl,
     this.age,
     this.gender,
     this.bloodGroup,
@@ -166,6 +172,9 @@ class UserModel {
       consultationFee: fee,
       onlineStatus: parsedOnline,
       availability: parsedAvailability,
+      clinicName: json['clinicName']?.toString(),
+      clinicAddress: json['clinicAddress']?.toString(),
+      googleMapsUrl: json['googleMapsUrl']?.toString(),
       age: json['age']?.toString(),
       gender: json['gender']?.toString(),
       bloodGroup: json['bloodGroup']?.toString(),
@@ -196,6 +205,9 @@ class UserModel {
       'consultationFee': consultationFee,
       'onlineStatus': onlineStatus,
       'availability': availability?.toJson(),
+      'clinicName': clinicName,
+      'clinicAddress': clinicAddress,
+      'googleMapsUrl': googleMapsUrl,
       'age': age,
       'gender': gender,
       'bloodGroup': bloodGroup,

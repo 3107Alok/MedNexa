@@ -1085,6 +1085,9 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
   late String _breakStart;
   late String _breakEnd;
   late String _languagesString;
+  late String _clinicName;
+  late String _clinicAddress;
+  late String _googleMapsUrl;
 
   final List<String> _allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -1104,6 +1107,9 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
     _breakStart = avail.breakTimeStart;
     _breakEnd = avail.breakTimeEnd;
     _languagesString = widget.user.languages?.join(', ') ?? 'English, Hindi';
+    _clinicName = widget.user.clinicName ?? '';
+    _clinicAddress = widget.user.clinicAddress ?? '';
+    _googleMapsUrl = widget.user.googleMapsUrl ?? '';
   }
 
   Future<void> _selectTime(BuildContext context, bool isStart, String current, Function(String) onSelected) async {
@@ -1147,6 +1153,9 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
         'consultationFee': _consultationFee,
         'languages': languagesList,
         'availability': updatedAvailability.toJson(),
+        'clinicName': _clinicName,
+        'clinicAddress': _clinicAddress,
+        'googleMapsUrl': _googleMapsUrl,
       });
 
       if (mounted) {
@@ -1269,6 +1278,42 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
                       ),
                       validator: (v) => v!.isEmpty ? 'Required' : null,
                       onChanged: (val) => _languagesString = val,
+                    ),
+                    Divider(color: isDark ? Colors.white24 : null),
+                    TextFormField(
+                      initialValue: _clinicName,
+                      style: TextStyle(color: textColor),
+                      decoration: InputDecoration(
+                        labelText: 'Clinic / Hospital Name',
+                        labelStyle: TextStyle(color: subtitleColor),
+                        prefixIcon: Icon(Icons.local_hospital_outlined, color: subtitleColor),
+                        border: InputBorder.none,
+                      ),
+                      onChanged: (val) => _clinicName = val,
+                    ),
+                    Divider(color: isDark ? Colors.white24 : null),
+                    TextFormField(
+                      initialValue: _clinicAddress,
+                      style: TextStyle(color: textColor),
+                      decoration: InputDecoration(
+                        labelText: 'Clinic Address',
+                        labelStyle: TextStyle(color: subtitleColor),
+                        prefixIcon: Icon(Icons.location_on_outlined, color: subtitleColor),
+                        border: InputBorder.none,
+                      ),
+                      onChanged: (val) => _clinicAddress = val,
+                    ),
+                    Divider(color: isDark ? Colors.white24 : null),
+                    TextFormField(
+                      initialValue: _googleMapsUrl,
+                      style: TextStyle(color: textColor),
+                      decoration: InputDecoration(
+                        labelText: 'Google Maps URL (Optional)',
+                        labelStyle: TextStyle(color: subtitleColor),
+                        prefixIcon: Icon(Icons.map_outlined, color: subtitleColor),
+                        border: InputBorder.none,
+                      ),
+                      onChanged: (val) => _googleMapsUrl = val,
                     ),
                   ],
                 ),

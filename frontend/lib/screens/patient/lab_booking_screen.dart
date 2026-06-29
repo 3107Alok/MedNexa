@@ -201,6 +201,8 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
         iconTheme: IconThemeData(color: textColor),
       ),
       body: Container(
+        height: double.infinity,
+        width: double.infinity,
         decoration: BoxDecoration(
           gradient: AppTheme.getBackgroundGradient(isDark),
         ),

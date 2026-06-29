@@ -31,6 +31,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   final _experienceController = TextEditingController();
   final _feeController = TextEditingController(text: '500');
   final _languagesController = TextEditingController(text: 'English, Hindi');
+  final _clinicNameController = TextEditingController();
+  final _clinicAddressController = TextEditingController();
+  final _googleMapsUrlController = TextEditingController();
   String _selectedCategory = 'General Physician';
   String _selectedSpecialty = 'General Practice';
 
@@ -100,6 +103,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     _experienceController.dispose();
     _feeController.dispose();
     _languagesController.dispose();
+    _clinicNameController.dispose();
+    _clinicAddressController.dispose();
+    _googleMapsUrlController.dispose();
     
     _labNameController.dispose();
     _labOwnerNameController.dispose();
@@ -139,6 +145,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         experience: _experienceController.text.trim(),
         languages: languagesList,
         consultationFee: feeDouble,
+        clinicName: _clinicNameController.text.trim(),
+        clinicAddress: _clinicAddressController.text.trim(),
+        googleMapsUrl: _googleMapsUrlController.text.trim(),
       );
     } else if (_selectedRole == UserRole.labOwner) {
       success = await authProvider.completeLabOwnerProfile(
@@ -410,6 +419,30 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               }
               return null;
             },
+          ),
+          const SizedBox(height: 20),
+          TextFormField(
+            controller: _clinicNameController,
+            decoration: const InputDecoration(
+              labelText: 'Clinic / Hospital Name',
+              prefixIcon: Icon(Icons.local_hospital_outlined),
+            ),
+          ),
+          const SizedBox(height: 20),
+          TextFormField(
+            controller: _clinicAddressController,
+            decoration: const InputDecoration(
+              labelText: 'Clinic Address',
+              prefixIcon: Icon(Icons.location_on_outlined),
+            ),
+          ),
+          const SizedBox(height: 20),
+          TextFormField(
+            controller: _googleMapsUrlController,
+            decoration: const InputDecoration(
+              labelText: 'Google Maps URL (Optional)',
+              prefixIcon: Icon(Icons.map_outlined),
+            ),
           ),
         ],
       );

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/models/chat_message.dart';
 import 'package:frontend/services/chat_service.dart';
+import 'package:frontend/services/chat_history_service.dart';
+import 'package:frontend/services/auth_provider.dart';
+import 'package:frontend/screens/patient/chat_history_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/theme/theme_notifier.dart';
 import 'package:frontend/theme/app_theme.dart';
@@ -10,7 +13,8 @@ import 'package:frontend/theme/glassmorphism.dart';
 import 'package:frontend/widgets/shared_glass_components.dart';
 
 class ChatbotScreen extends StatefulWidget {
-  const ChatbotScreen({super.key});
+  final String? sessionId;
+  const ChatbotScreen({super.key, this.sessionId});
 
   @override
   State<ChatbotScreen> createState() => _ChatbotScreenState();
@@ -19,9 +23,43 @@ class ChatbotScreen extends StatefulWidget {
 class _ChatbotScreenState extends State<ChatbotScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<ChatMessage> _messages = [];
+  List<ChatMessage> _messages = [];
   final ChatService _chatService = ChatService();
+  final ChatHistoryService _chatHistoryService = ChatHistoryService();
   bool _isLoading = false;
+  String? _sessionId;
+  
+  @override
+  void initState() {
+    super.initState();
+    _sessionId = widget.sessionId;
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    if (_sessionId == null) return;
+    
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.user?.uid;
+    if (userId == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final history = await _chatHistoryService.getMessages(userId, _sessionId!);
+      if (mounted) {
+        setState(() {
+          _messages = history;
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      _showErrorSnackBar('Failed to load chat history');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -54,6 +92,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
 
     final historyToSend = List<ChatMessage>.from(_messages);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.user?.uid;
 
     setState(() {
       _messages.add(userMessage);
@@ -61,21 +101,43 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     });
     _scrollToBottom();
 
+    if (userId != null) {
+      try {
+        if (_sessionId == null) {
+          _sessionId = await _chatHistoryService.createSession(userId, query);
+        } else {
+          await _chatHistoryService.addMessageToSession(userId, _sessionId!, userMessage);
+        }
+      } catch (e) {
+        // Continue even if saving fails temporarily
+      }
+    }
+
     try {
       // Send the current message and the preceding message history
       final reply = await _chatService.sendMessage(query, historyToSend);
       
       if (!mounted) return;
       
+      final botMessage = ChatMessage(
+        message: reply,
+        isUser: false,
+        timestamp: DateTime.now(),
+      );
+
       setState(() {
-        _messages.add(ChatMessage(
-          message: reply,
-          isUser: false,
-          timestamp: DateTime.now(),
-        ));
+        _messages.add(botMessage);
         _isLoading = false;
       });
       _scrollToBottom();
+      
+      if (userId != null && _sessionId != null) {
+        try {
+          await _chatHistoryService.addMessageToSession(userId, _sessionId!, botMessage);
+        } catch (e) {
+          // ignore
+        }
+      }
     } catch (e) {
       if (!mounted) return;
       
@@ -87,30 +149,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     }
   }
 
-  void _clearChat() {
-    if (_messages.isEmpty) return;
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Clear Conversation', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-        content: Text('Are you sure you want to clear all messages?', style: GoogleFonts.outfit()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _messages.clear();
-              });
-              Navigator.pop(context);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Clear'),
-          ),
-        ],
+  void _navigateToHistory() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ChatHistoryScreen(),
       ),
     );
   }
@@ -177,13 +220,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           ],
         ),
         actions: [
-          if (_messages.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.delete_sweep_outlined),
-              tooltip: 'Clear Chat',
-              onPressed: _clearChat,
-              color: textColor,
-            ),
+          IconButton(
+            icon: const Icon(Icons.history_outlined),
+            tooltip: 'Chat History',
+            onPressed: _navigateToHistory,
+            color: textColor,
+          ),
         ],
       ),
       body: Container(

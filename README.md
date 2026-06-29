@@ -71,8 +71,12 @@ Our universal medical document analyzer automatically classifies and parses 5 di
 
 ### 4. AI Chatbot
 Interactive medical chatbot panel utilizing Gemini AI to query symptoms, medicine interactions, and nutritional guidance securely.
+*   **Persistent Chat History**: Chat sessions are stored securely in Firestore, allowing users to persist conversations across devices.
+*   **Lazy Loading & Optimizations**: Only session metadata is loaded initially. Full message history is lazy-loaded upon opening a specific chat to preserve database reads.
+*   **Total Privacy**: Users can permanently hard-delete conversations directly from the database.
 
 ### 5. Advanced Authentication & UI Upgrades
+*   **Doctor Location & Maps Integration**: Doctors can add their clinic address and Google Maps links. Patients can launch Google Maps directly from the Doctor Cards.
 *   **Mandatory Email Verification**: Prevents unverified registrations from polluting the database. Upon signup, users receive a verification link and are auto-signed out. The app verifies `emailVerified` on login, launching a premium glassmorphic verification dialog if verification is incomplete.
 *   **Lazy Firestore Creation**: The Firestore user document is created only after the user's email has been verified and they log in for the first time.
 *   **Secure Password Reset**: Built-in glassmorphic forgot password panel linked with Firebase `sendPasswordResetEmail()`.

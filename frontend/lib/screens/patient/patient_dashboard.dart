@@ -326,15 +326,7 @@ class _PatientHomeTabState extends State<PatientHomeTab> {
                         () => Navigator.pushNamed(context, '/ocr-reader'),
                         isDark,
                       ),
-                      _buildQuickActionCard(
-                        context,
-                        'Lab Reports',
-                        'AI explanation summaries',
-                        AppTheme.accentColor,
-                        Icons.assignment_outlined,
-                        () => Navigator.pushNamed(context, '/lab-reports'),
-                        isDark,
-                      ),
+
                       _buildQuickActionCard(
                         context,
                         'Medical Records',
@@ -716,6 +708,27 @@ class _PatientServicesTabState extends State<PatientServicesTab> {
     );
   }
 
+  IconData _getLabTestIcon(String name) {
+    final lower = name.toLowerCase();
+    if (lower.contains('blood') || lower.contains('cbc')) return Icons.bloodtype_outlined;
+    if (lower.contains('sugar')) return Icons.water_drop_outlined;
+    if (lower.contains('liver')) return Icons.monitor_heart_outlined;
+    if (lower.contains('kidney')) return Icons.clean_hands_outlined;
+    if (lower.contains('thyroid')) return Icons.health_and_safety_outlined;
+    if (lower.contains('vitamin')) return Icons.medication_outlined;
+    if (lower.contains('urine')) return Icons.science_outlined;
+    return Icons.science_outlined;
+  }
+
+  Color _getLabTestColor(String name) {
+    final lower = name.toLowerCase();
+    if (lower.contains('blood') || lower.contains('cbc')) return Colors.redAccent;
+    if (lower.contains('sugar')) return Colors.lightBlue;
+    if (lower.contains('vitamin')) return Colors.orangeAccent;
+    if (lower.contains('urine')) return Colors.amber;
+    return Colors.teal;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -775,6 +788,14 @@ class _PatientServicesTabState extends State<PatientServicesTab> {
                     Colors.orange,
                     Icons.history,
                     () => Navigator.pushNamed(context, '/medical-history'),
+                    isDark,
+                  ),
+                  _buildServiceChoiceCard(
+                    'Lab\nReports',
+                    'AI explanation summaries',
+                    AppTheme.accentColor,
+                    Icons.assignment_outlined,
+                    () => Navigator.pushNamed(context, '/lab-reports'),
                     isDark,
                   ),
                 ],
@@ -862,6 +883,9 @@ class _PatientServicesTabState extends State<PatientServicesTab> {
                             final String dept = doc['department'] ?? doc['category'] ?? 'N/A';
                             final String fee = doc['consultationFee']?.toString() ?? '500';
                             final String exp = doc['experience'] ?? '3';
+                            final String clinicName = doc['clinicName'] ?? '';
+                            final String clinicAddress = doc['clinicAddress'] ?? '';
+                            final String mapsUrl = doc['googleMapsUrl'] ?? '';
 
                             return AnimatedContainer(
                               duration: Duration(milliseconds: 200 + idx * 50),
@@ -920,6 +944,40 @@ class _PatientServicesTabState extends State<PatientServicesTab> {
                                         ),
                                       ],
                                     ),
+                                     if (clinicName.isNotEmpty || clinicAddress.isNotEmpty) ...[
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Icon(Icons.location_on, size: 14, color: theme.primaryColor),
+                                          const SizedBox(width: 4),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                if (clinicName.isNotEmpty)
+                                                  Text(clinicName, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
+                                                if (clinicAddress.isNotEmpty)
+                                                  Text(clinicAddress, style: GoogleFonts.outfit(fontSize: 11, color: subtitleColor)),
+                                                if (mapsUrl.isNotEmpty)
+                                                  InkWell(
+                                                    onTap: () async {
+                                                      final url = Uri.parse(mapsUrl);
+                                                      if (await canLaunchUrl(url)) {
+                                                        await launchUrl(url);
+                                                      }
+                                                    },
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.only(top: 4.0),
+                                                      child: Text('View on Google Maps', style: GoogleFonts.outfit(fontSize: 11, color: Colors.blue, decoration: TextDecoration.underline)),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                     const SizedBox(height: 12),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1016,10 +1074,10 @@ class _PatientServicesTabState extends State<PatientServicesTab> {
                           Container(
                             width: 36, height: 36,
                             decoration: BoxDecoration(
-                              color: Colors.teal.withOpacity(0.12),
+                              color: _getLabTestColor(test['name']!).withOpacity(0.12),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.science, color: Colors.teal, size: 18),
+                            child: Icon(_getLabTestIcon(test['name']!), color: _getLabTestColor(test['name']!), size: 18),
                           ),
                           const SizedBox(height: 10),
                           Text(

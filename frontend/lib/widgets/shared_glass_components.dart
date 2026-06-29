@@ -19,57 +19,60 @@ class GlassBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
-      child: GlassContainer(
-        isDarkMode: isDarkMode,
-        borderRadius: 32,
-        height: 70,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: List.generate(items.length, (index) {
-            final isSelected = currentIndex == index;
-            final item = items[index];
-            final icon = isSelected ? (item.activeIcon ?? item.icon) : item.icon;
-            final color = isSelected
-                ? AppTheme.primaryColor
-                : (isDarkMode ? Colors.white54 : Colors.black45);
+    return SafeArea(
+      bottom: true,
+      child: Container(
+        margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+        child: GlassContainer(
+          isDarkMode: isDarkMode,
+          borderRadius: 32,
+          height: 70,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(items.length, (index) {
+              final isSelected = currentIndex == index;
+              final item = items[index];
+              final icon = isSelected ? (item.activeIcon ?? item.icon) : item.icon;
+              final color = isSelected
+                  ? AppTheme.primaryColor
+                  : (isDarkMode ? Colors.white54 : Colors.black45);
 
-            return GestureDetector(
-              onTap: () => onTap(index),
-              behavior: HitTestBehavior.opaque,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppTheme.primaryColor.withValues(alpha: 0.15)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Row(
-                  children: [
-                    IconTheme(
-                      data: IconThemeData(color: color, size: 24),
-                      child: icon,
-                    ),
-                    if (isSelected && item.label != null) ...[
-                      const SizedBox(width: 8),
-                      Text(
-                        item.label!,
-                        style: GoogleFonts.outfit(
-                          color: color,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
+              return GestureDetector(
+                onTap: () => onTap(index),
+                behavior: HitTestBehavior.opaque,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppTheme.primaryColor.withValues(alpha: 0.15)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(
+                    children: [
+                      IconTheme(
+                        data: IconThemeData(color: color, size: 24),
+                        child: icon,
                       ),
-                    ]
-                  ],
+                      if (isSelected && item.label != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          item.label!,
+                          style: GoogleFonts.outfit(
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ]
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ),
     );
@@ -530,36 +533,45 @@ Future<void> showGlassSettingsModal(BuildContext context, bool isDarkMode, Funct
                 },
               ),
               const SizedBox(height: 16),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(
-                  Icons.logout_rounded,
-                  color: AppTheme.errorColor,
-                ),
-                title: Text(
-                  'Logout',
-                  style: GoogleFonts.outfit(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.errorColor,
-                  ),
-                ),
+              InkWell(
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(context); // Close the settings sheet
                   showDialog(
                     context: context,
                     builder: (dCtx) => GlassLogoutDialog(
                       isDarkMode: currentIsDark,
                       onCancel: () => Navigator.pop(dCtx),
-                      onConfirm: () {
+                      onConfirm: () async {
                         Navigator.pop(dCtx);
-                        onLogout();
-                        // Reset navigation stack to login screen
-                        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                        final result = onLogout();
+                        if (result is Future) {
+                          await result;
+                        }
+                        if (context.mounted) {
+                          Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                        }
                       },
                     ),
                   );
                 },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.logout_rounded, color: AppTheme.errorColor),
+                      const SizedBox(width: 16),
+                      Text(
+                        'Logout',
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.errorColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

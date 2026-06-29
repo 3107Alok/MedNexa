@@ -222,6 +222,9 @@ class AuthProvider with ChangeNotifier {
     required String experience,
     required List<String> languages,
     required double consultationFee,
+    String? clinicName,
+    String? clinicAddress,
+    String? googleMapsUrl,
   }) async {
     _setLoading(true);
     try {
@@ -246,6 +249,9 @@ class AuthProvider with ChangeNotifier {
           'experience': experience,
           'languages': languages,
           'consultationFee': consultationFee,
+          'clinicName': clinicName,
+          'clinicAddress': clinicAddress,
+          'googleMapsUrl': googleMapsUrl,
           'onlineStatus': true,
           'availability': defaultAvailability.toJson(),
           'verified': false,
