@@ -137,6 +137,8 @@ class _PrescriptionReaderScreenState extends State<PrescriptionReaderScreen> {
         ],
       ),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: BoxDecoration(
           gradient: AppTheme.getBackgroundGradient(isDark),
         ),
