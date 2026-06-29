@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:frontend/services/notification_service.dart';
 
 class BookingService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -42,13 +43,11 @@ class BookingService {
     final String doctorId = bookingData['doctor_id'] ?? '';
     final String patientName = bookingData['patient_name'] ?? 'A patient';
     if (doctorId.isNotEmpty) {
-      await _db.collection('notifications').add({
-        'userId': doctorId,
-        'title': 'New Appointment Booking 📅',
-        'body': '$patientName has booked an appointment with you for ${bookingData['date']} at ${bookingData['time_slot']}.',
-        'createdAt': FieldValue.serverTimestamp(),
-        'isRead': false,
-      });
+      await NotificationService.addNotification(
+        userId: doctorId,
+        title: 'New Appointment Booking 📅',
+        body: '$patientName has booked an appointment with you for ${bookingData['date']} at ${bookingData['time_slot']}.',
+      );
     }
   }
 
@@ -124,13 +123,11 @@ class BookingService {
           final patientId = data['patient_id'] ?? '';
           final doctorName = data['doctor_name'] ?? 'Doctor';
           if (patientId.isNotEmpty) {
-            await _db.collection('notifications').add({
-              'userId': patientId,
-              'title': 'Appointment Accepted 📅',
-              'body': 'Your appointment with $doctorName is accepted.',
-              'createdAt': FieldValue.serverTimestamp(),
-              'isRead': false,
-            });
+            await NotificationService.addNotification(
+              userId: patientId,
+              title: 'Appointment Accepted 📅',
+              body: 'Your appointment with $doctorName is accepted.',
+            );
           }
         }
       } catch (e) {

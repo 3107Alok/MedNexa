@@ -2,11 +2,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:frontend/services/auth_provider.dart';
 import 'package:frontend/theme/theme_notifier.dart';
 import 'package:frontend/theme/glassmorphism.dart';
 import 'package:frontend/theme/app_theme.dart';
+import 'package:frontend/services/notification_service.dart';
 import 'package:intl/intl.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -17,63 +17,45 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  bool _isCleaning = true;
+  List<LocalNotification> _notifications = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _cleanOldNotifications();
+    _loadNotifications();
   }
 
-  Future<void> _cleanOldNotifications() async {
+  Future<void> _loadNotifications() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.user;
     if (user == null) {
-      if (mounted) setState(() => _isCleaning = false);
+      if (mounted) setState(() => _isLoading = false);
       return;
     }
 
     try {
-      final cutoff = DateTime.now().subtract(const Duration(hours: 24));
-      final snapshot = await _db
-          .collection('notifications')
-          .where('userId', isEqualTo: user.uid)
-          .where('createdAt', isLessThan: cutoff)
-          .get();
-
-      if (snapshot.docs.isNotEmpty) {
-        final batch = _db.batch();
-        for (var doc in snapshot.docs) {
-          batch.delete(doc.reference);
-        }
-        await batch.commit();
+      final list = await NotificationService.getNotifications(user.uid);
+      if (mounted) {
+        setState(() {
+          _notifications = list;
+          _isLoading = false;
+        });
       }
     } catch (e) {
-      debugPrint('Error cleaning old notifications: $e');
-    } finally {
-      if (mounted) setState(() => _isCleaning = false);
+      debugPrint('Error loading notifications: $e');
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _markAllAsRead(String userId) async {
-    try {
-      final snapshot = await _db
-          .collection('notifications')
-          .where('userId', isEqualTo: userId)
-          .where('isRead', isEqualTo: false)
-          .get();
+    await NotificationService.markAllAsRead(userId);
+    await _loadNotifications();
+  }
 
-      if (snapshot.docs.isNotEmpty) {
-        final batch = _db.batch();
-        for (var doc in snapshot.docs) {
-          batch.update(doc.reference, {'isRead': true});
-        }
-        await batch.commit();
-      }
-    } catch (e) {
-      debugPrint('Error marking notifications as read: $e');
-    }
+  Future<void> _markAsRead(String notificationId) async {
+    await NotificationService.markAsRead(notificationId);
+    await _loadNotifications();
   }
 
   @override
@@ -115,7 +97,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
           ],
         ),
-        body: _isCleaning
+        body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SafeArea(
                 child: Padding(
@@ -148,141 +130,120 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       ),
                       const SizedBox(height: 16),
                       Expanded(
-                        child: StreamBuilder<QuerySnapshot>(
-                          stream: _db
-                              .collection('notifications')
-                              .where('userId', isEqualTo: user.uid)
-                              .orderBy('createdAt', descending: true)
-                              .snapshots(),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasError) {
-                              return Center(
-                                child: Text(
-                                  'Error loading notifications',
-                                  style: GoogleFonts.outfit(color: Colors.red),
-                                ),
-                              );
-                            }
-
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(child: CircularProgressIndicator());
-                            }
-
-                            final docs = snapshot.data?.docs ?? [];
-
-                            if (docs.isEmpty) {
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                        child: RefreshIndicator(
+                          onRefresh: _loadNotifications,
+                          child: _notifications.isEmpty
+                              ? ListView(
                                   children: [
-                                    Icon(
-                                      Icons.notifications_off_outlined,
-                                      size: 64,
-                                      color: isDark ? Colors.grey[700] : Colors.grey[300],
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'No notifications yet',
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: subtitleColor,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Alerts regarding approvals and bookings will appear here.',
-                                      textAlign: TextAlign.center,
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 13,
-                                        color: isDark ? Colors.white60 : Colors.grey[500],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-
-                            return ListView.builder(
-                              itemCount: docs.length,
-                              itemBuilder: (context, index) {
-                                final doc = docs[index];
-                                final data = doc.data() as Map<String, dynamic>;
-                                final isRead = data['isRead'] ?? false;
-                                final timestamp = data['createdAt'] as Timestamp?;
-                                final timeStr = timestamp != null
-                                    ? DateFormat('hh:mm a').format(timestamp.toDate())
-                                    : '';
-
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12.0),
-                                  child: GlassContainer(
-                                    isDarkMode: isDark,
-                                    borderRadius: 16,
-                                    border: isRead
-                                        ? null
-                                        : Border.all(
-                                            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                                            width: 1.5,
-                                          ),
-                                    child: ListTile(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                      leading: CircleAvatar(
-                                        backgroundColor: isRead
-                                            ? (isDark ? Colors.white10 : Colors.grey[100])
-                                            : Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                                        child: Icon(
-                                          Icons.notifications,
-                                          color: isRead
-                                              ? (isDark ? Colors.white54 : Colors.grey)
-                                              : Theme.of(context).colorScheme.primary,
-                                        ),
-                                      ),
-                                      title: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+                                    Center(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          Expanded(
-                                            child: Text(
-                                              data['title'] ?? 'Alert',
-                                              style: GoogleFonts.outfit(
-                                                fontWeight: isRead ? FontWeight.w500 : FontWeight.bold,
-                                                fontSize: 15,
-                                                color: textColor,
-                                              ),
+                                          Icon(
+                                            Icons.notifications_off_outlined,
+                                            size: 64,
+                                            color: isDark ? Colors.grey[700] : Colors.grey[300],
+                                          ),
+                                          const SizedBox(height: 16),
+                                          Text(
+                                            'No notifications yet',
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: subtitleColor,
                                             ),
                                           ),
+                                          const SizedBox(height: 8),
                                           Text(
-                                            timeStr,
+                                            'Alerts regarding approvals and bookings will appear here.',
+                                            textAlign: TextAlign.center,
                                             style: GoogleFonts.outfit(
-                                              fontSize: 11,
-                                              color: isDark ? Colors.white38 : Colors.grey[500],
+                                              fontSize: 13,
+                                              color: isDark ? Colors.white60 : Colors.grey[500],
                                             ),
                                           ),
                                         ],
                                       ),
-                                      subtitle: Padding(
-                                        padding: const EdgeInsets.only(top: 4.0),
-                                        child: Text(
-                                          data['body'] ?? '',
-                                          style: GoogleFonts.outfit(
-                                            fontSize: 13,
-                                            color: isRead
-                                                ? (isDark ? Colors.white60 : Colors.grey[600])
-                                                : (isDark ? Colors.white70 : Colors.black87),
+                                    ),
+                                  ],
+                                )
+                              : ListView.builder(
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  itemCount: _notifications.length,
+                                  itemBuilder: (context, index) {
+                                    final notif = _notifications[index];
+                                    final isRead = notif.isRead;
+                                    final timeStr = DateFormat('hh:mm a').format(notif.createdAt);
+
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 12.0),
+                                      child: GlassContainer(
+                                        isDarkMode: isDark,
+                                        borderRadius: 16,
+                                        border: isRead
+                                            ? null
+                                            : Border.all(
+                                                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                                                width: 1.5,
+                                              ),
+                                        child: ListTile(
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                          leading: CircleAvatar(
+                                            backgroundColor: isRead
+                                                ? (isDark ? Colors.white10 : Colors.grey[100])
+                                                : Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                                            child: Icon(
+                                              Icons.notifications,
+                                              color: isRead
+                                                  ? (isDark ? Colors.white54 : Colors.grey)
+                                                  : Theme.of(context).colorScheme.primary,
+                                            ),
                                           ),
+                                          title: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  notif.title,
+                                                  style: GoogleFonts.outfit(
+                                                    fontWeight: isRead ? FontWeight.w500 : FontWeight.bold,
+                                                    fontSize: 15,
+                                                    color: textColor,
+                                                  ),
+                                                ),
+                                              ),
+                                              Text(
+                                                timeStr,
+                                                style: GoogleFonts.outfit(
+                                                  fontSize: 11,
+                                                  color: isDark ? Colors.white38 : Colors.grey[500],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          subtitle: Padding(
+                                            padding: const EdgeInsets.only(top: 4.0),
+                                            child: Text(
+                                              notif.body,
+                                              style: GoogleFonts.outfit(
+                                                fontSize: 13,
+                                                color: isRead
+                                                    ? (isDark ? Colors.white60 : Colors.grey[600])
+                                                    : (isDark ? Colors.white70 : Colors.black87),
+                                              ),
+                                            ),
+                                          ),
+                                          onTap: () {
+                                            if (!isRead) {
+                                              _markAsRead(notif.id);
+                                            }
+                                          },
                                         ),
                                       ),
-                                      onTap: () {
-                                        if (!isRead) {
-                                          doc.reference.update({'isRead': true});
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
+                                    );
+                                  },
+                                ),
                         ),
                       ),
                       const SizedBox(height: 16),

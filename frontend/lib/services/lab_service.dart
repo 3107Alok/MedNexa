@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:frontend/config/api_config.dart';
 import 'package:frontend/models/lab_profile_model.dart';
+import 'package:frontend/services/notification_service.dart';
 
 class LabService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -65,13 +66,11 @@ class LabService {
     final String labId = bookingData['labId'] ?? '';
     final String patientName = bookingData['patientName'] ?? 'A patient';
     if (labId.isNotEmpty) {
-      await _db.collection('notifications').add({
-        'userId': labId,
-        'title': 'New Lab Booking 🩸',
-        'body': '$patientName has booked a ${bookingData['testName']} test for ${bookingData['date']} at ${bookingData['time_slot']}.',
-        'createdAt': FieldValue.serverTimestamp(),
-        'isRead': false,
-      });
+      await NotificationService.addNotification(
+        userId: labId,
+        title: 'New Lab Booking 🩸',
+        body: '$patientName has booked a ${bookingData['testName']} test for ${bookingData['date']} at ${bookingData['time_slot']}.',
+      );
     }
   }
 

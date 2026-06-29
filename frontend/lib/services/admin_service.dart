@@ -1,5 +1,5 @@
-// ignore_for_file: avoid_print
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:frontend/services/notification_service.dart';
 
 class AdminService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -57,13 +57,11 @@ class AdminService {
     });
 
     if (status.toLowerCase() == 'verified') {
-      await _db.collection('notifications').add({
-        'userId': uid,
-        'title': 'Account Approved 🎉',
-        'body': 'Your doctor profile has been successfully verified by the Admin. You can now consult patients.',
-        'createdAt': FieldValue.serverTimestamp(),
-        'isRead': false,
-      });
+      await NotificationService.addNotification(
+        userId: uid,
+        title: 'Account Approved 🎉',
+        body: 'Your doctor profile has been successfully verified by the Admin. You can now consult patients.',
+      );
     }
   }
 
@@ -74,13 +72,11 @@ class AdminService {
       'rejectionReason': reason,
     });
 
-    await _db.collection('notifications').add({
-      'userId': uid,
-      'title': 'Account Rejection ❌',
-      'body': 'Your doctor profile verification was rejected. Reason: $reason',
-      'createdAt': FieldValue.serverTimestamp(),
-      'isRead': false,
-    });
+    await NotificationService.addNotification(
+      userId: uid,
+      title: 'Account Rejection ❌',
+      body: 'Your doctor profile verification was rejected. Reason: $reason',
+    );
   }
 
   Future<Map<String, int>> getDashboardStats() async {
