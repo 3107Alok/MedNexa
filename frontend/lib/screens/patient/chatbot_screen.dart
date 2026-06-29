@@ -470,8 +470,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     return ClipRRect(
       child: BackdropFilter(
         filter: dart_ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        child: SafeArea(
+          bottom: true,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E1E2E).withOpacity(0.85) : Colors.white.withOpacity(0.85),
             border: Border(
@@ -510,6 +512,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           ),
         ],
       ),
+          ),
       ),
       ),
     );

@@ -19,11 +19,14 @@ class GlassBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: true,
-      child: Container(
-        margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
-        child: GlassContainer(
+    final systemBottom = MediaQuery.of(context).viewPadding.bottom;
+    return Container(
+      margin: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        bottom: systemBottom > 0 ? systemBottom + 8 : 20,
+      ),
+      child: GlassContainer(
           isDarkMode: isDarkMode,
           borderRadius: 32,
           height: 70,
@@ -74,8 +77,7 @@ class GlassBottomNav extends StatelessWidget {
             }),
           ),
         ),
-      ),
-    );
+      );
   }
 }
 
